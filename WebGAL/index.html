@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>INDEX</title>
-    <script src="res/script/react.development.js" crossorigin></script>
-    <script src="res/script/react-dom.development.js" crossorigin></script>
+    <script src="res/script/react.production.min.js" crossorigin></script>
+    <script src="res/script/react-dom.production.min.js" crossorigin></script>
     <link rel="stylesheet" type="text/css" href="res/style/main.css">
     <link rel="stylesheet" type="text/css" href="res/style/settings.css">
     <link rel="stylesheet" type="text/css" href="res/style/Load_Save.css">
@@ -15,7 +15,7 @@
         <div id="setButtonBottom">
             <div class="TitleSingleButton" id="leftTitleButton" onclick="hideTitle()">开始游戏</div>
             <div class="TitleSingleButton">继续游戏</div>
-            <div class="TitleSingleButton">读取存档</div>
+            <div class="TitleSingleButton" onclick="onLoadGame()">读取存档</div>
             <div class="TitleSingleButton" onclick="onSetting()">设置界面</div>
             <div class="TitleSingleButton">退出游戏</div>
         </div>
@@ -39,17 +39,34 @@
     </div>
 </div>
 
-<!--<div id="Load">-->
-<!--    <div id="loadMainBox">-->
-<!--        <div id="closeLoad" onclick="closeLoad()">-->
-<!--            <img src="res/img/close.svg" class="closeSVG" alt="close">-->
-<!--        </div>-->
-<!--        <div id="LoadTitle">-->
-<!--            读档-->
-<!--        </div>-->
-<!--        <div id="LoadItems"></div>-->
-<!--    </div>-->
-<!--</div>-->
+<div id="Load">
+    <div id="loadMainBox">
+        <div id="closeLoad" onclick="closeLoad()">
+            <img src="res/img/close.svg" class="closeSVG" alt="close">
+        </div>
+        <div id="LoadTitle">
+            读档
+        </div>
+        <div id="LoadItems">
+
+        </div>
+    </div>
+</div>
+
+<div id="Save">
+    <div id="saveMainBox">
+        <div id="closeSave" onclick="closeSave()">
+            <img src="res/img/close.svg" class="closeSVG" alt="close">
+        </div>
+        <div id="SaveTitle">
+            存档
+        </div>
+        <div id="SaveItems">
+
+        </div>
+    </div>
+</div>
+
 
 <div id="chooseBox">
 

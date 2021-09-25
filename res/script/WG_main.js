@@ -36,17 +36,43 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 // 初始化存档系统
 var Saves = [];
 
+//初始化需要记录到cookie的变量
+var currentSavePage = 0;
+var currentLoadPage = 0;
+
 // 初始化设置表
 var Settings = {
     font_size: 'medium',
     play_speed: 'medium'
 };
 
+function loadCookie() {
+    if (document.cookie) {
+        var data = JSON.parse(document.cookie);
+        Saves = data.SavedGame;
+        currentSavePage = data.SP;
+        currentLoadPage = data.LP;
+        Settings = data.cSettings;
+    }
+}
+
+function writeCookie() {
+    var toCookie = {
+        SavedGame: Saves,
+        SP: currentSavePage,
+        LP: currentLoadPage,
+        cSettings: Settings
+    };
+    document.cookie = JSON.stringify(toCookie);
+}
+
 // 读取游戏存档
 function LoadSavedGame(index) {
+    closeLoad();
+    hideTitle();
     var save = Saves[index];
     //get Scene:
-    var url = '/game/scene/';
+    var url = 'game/scene/';
     url = url + save['SceneName'];
     currentScene = '';
     currentText = 0;
@@ -75,15 +101,15 @@ function LoadSavedGame(index) {
                     currentScene[i][0] = _command;
                     currentScene[i][1] = content;
                 }
-                console.log('Read scene complete.');
+                // console.log('Read scene complete.');
                 // console.log(currentScene);
                 currentSentence = save["SentenceID"];
                 currentText = save["SentenceID"];
-                console.log("start:" + currentSentence);
+                // console.log("start:"+currentSentence)
 
                 //load saved scene:
                 var command = save["command"];
-                console.log('readSaves:' + command);
+                // console.log('readSaves:'+command)
                 document.getElementById('mainBackground').style.backgroundImage = "url('game/background/" + save["bg_Name"] + "')";
                 if (save["fig_Name"] === 'none') {
                     ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
@@ -150,6 +176,7 @@ function LoadSavedGame(index) {
 function saveGame(index) {
     var tempInfo = JSON.stringify(currentInfo);
     Saves[index] = JSON.parse(tempInfo);
+    writeCookie();
 }
 
 // 获取场景脚本
@@ -181,10 +208,10 @@ function getScene(url) {
                     currentScene[i][0] = command;
                     currentScene[i][1] = content;
                 }
-                console.log('Read scene complete.');
+                // console.log('Read scene complete.');
                 // console.log(currentScene);
                 currentSentence = 0;
-                console.log("start:" + currentSentence);
+                // console.log("start:"+currentSentence)
                 nextSentenceProcessor();
             }
         }
@@ -193,9 +220,10 @@ function getScene(url) {
 
 // 引擎加载完成
 window.onload = function () {
+    loadCookie();
     loadSettings();
     document.getElementById('Title').style.backgroundImage = 'url("game/background/Title1.png")';
-    getScene("game/scene/start.txt");
+    getScene("/game/scene/start.txt");
     currentInfo["SceneName"] = 'start.txt';
 };
 
@@ -230,7 +258,7 @@ function nextSentenceProcessor() {
     }
     var thisSentence = currentScene[currentSentence];
     var command = thisSentence[0];
-    console.log(command);
+    // console.log(command)
     if (command === 'changeBG') {
         // console.log('Now change background to ' + "url('/game/background/" + thisSentence[1] + "')");
         document.getElementById('mainBackground').style.backgroundImage = "url('game/background/" + thisSentence[1] + "')";
@@ -355,7 +383,7 @@ function showTextArray(textArray, now) {
     var i = 0;
     clearInterval(interval);
     var interval = setInterval(showSingle, textShowWatiTime);
-    console.log("now: " + now + " currentText: " + currentText);
+    // console.log("now: "+now+" currentText: "+currentText)
     function showSingle() {
         var tempElement = React.createElement(
             'span',
@@ -433,6 +461,7 @@ function showTextPreview(text) {
 
 // 打开设置
 function onSetting() {
+    loadCookie();
     var settingInterface = React.createElement(
         'div',
         null,
@@ -441,6 +470,11 @@ function onSetting() {
             { className: 'singleSettingItem' },
             React.createElement(SettingButtons_font, null),
             React.createElement(SettingButtons_speed, null),
+            React.createElement(
+                'div',
+                { className: "deleteCookie" },
+                '\u6E05\u9664\u6240\u6709\u8BBE\u7F6E\u9009\u9879\u4EE5\u53CA\u5B58\u6863'
+            ),
             React.createElement('br', null),
             React.createElement(
                 'div',
@@ -464,7 +498,7 @@ function closeSettings() {
 
 // 分支选择
 function chooseScene(url) {
-    console.log(url);
+    // console.log(url);
     currentInfo["SceneName"] = url;
     var sUrl = "game/scene/" + url;
     getScene(sUrl);
@@ -480,10 +514,10 @@ function autoNext() {
         auto = 0;
         document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0)';
         document.getElementById('fastButton').style.color = 'white';
-        console.log("notFast");
+        // console.log("notFast");
         autoWaitTime = setAutoWaitTime;
         auto = 1;
-        console.log("auto");
+        // console.log("auto");
         document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0.8)';
         document.getElementById('autoButton').style.color = '#8E354A';
         nextSentenceProcessor();
@@ -492,7 +526,7 @@ function autoNext() {
         auto = 0;
         document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0)';
         document.getElementById('autoButton').style.color = 'white';
-        console.log("notAuto");
+        // console.log("notAuto");
     }
 }
 
@@ -503,12 +537,12 @@ function fastNext() {
         auto = 0;
         document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0)';
         document.getElementById('autoButton').style.color = 'white';
-        console.log("notAuto");
+        // console.log("notAuto");
         autoWaitTime = 500;
         textShowWatiTime = 5;
         fast = 1;
         auto = 1;
-        console.log("fast");
+        // console.log("fast");
         document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0.8)';
         document.getElementById('fastButton').style.color = '#8E354A';
         nextSentenceProcessor();
@@ -519,7 +553,7 @@ function fastNext() {
         auto = 0;
         document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0)';
         document.getElementById('fastButton').style.color = 'white';
-        console.log("notFast");
+        // console.log("notFast");
     }
 }
 
@@ -574,6 +608,7 @@ var SettingButtons_font = function (_React$Component) {
             } else if (Settings['font_size'] === 'large') {
                 buttonStateNow[2] = 'On';
             }
+            writeCookie();
             this.setState({
                 buttonState: buttonStateNow
             });
@@ -670,6 +705,7 @@ var SettingButtons_speed = function (_React$Component2) {
             } else if (Settings['play_speed'] === 'fast') {
                 buttonStateNow[2] = 'On';
             }
+            writeCookie();
             this.setState({
                 buttonState: buttonStateNow
             });
@@ -720,3 +756,344 @@ function hideTitle() {
     getScene("game/scene/start.txt");
     currentInfo["SceneName"] = 'start.txt';
 }
+
+function onLoadGame() {
+    loadCookie();
+    document.getElementById('Load').style.display = 'block';
+    ReactDOM.render(React.createElement(LoadMainModel, { PageQty: 5 }), document.getElementById('LoadItems'));
+}
+
+function closeLoad() {
+    document.getElementById('Load').style.display = 'none';
+}
+
+var LoadMainModel = function (_React$Component3) {
+    _inherits(LoadMainModel, _React$Component3);
+
+    _createClass(LoadMainModel, [{
+        key: 'setCurrentPage',
+        value: function setCurrentPage(page) {
+            currentLoadPage = page;
+            this.setState({
+                currentPage: currentLoadPage
+            });
+            writeCookie();
+        }
+    }, {
+        key: 'loadButtons',
+        value: function loadButtons() {
+            var _this6 = this;
+
+            this.Buttons = [];
+
+            var _loop3 = function _loop3(i) {
+                var temp = React.createElement(
+                    'span',
+                    { className: 'LoadIndexButton', onClick: function onClick() {
+                            _this6.setCurrentPage(i);
+                        }, key: i },
+                    i + 1
+                );
+                if (i === currentLoadPage) temp = React.createElement(
+                    'span',
+                    { className: 'LoadIndexButtonOn', onClick: function onClick() {
+                            _this6.setCurrentPage(i);
+                        }, key: i },
+                    i + 1
+                );
+                _this6.Buttons.push(temp);
+            };
+
+            for (var i = 0; i < this.LoadPageQty; i++) {
+                _loop3(i);
+            }
+        }
+    }, {
+        key: 'loadSaveButtons',
+        value: function loadSaveButtons() {
+            var _this7 = this;
+
+            this.SaveButtons = [];
+
+            var _loop4 = function _loop4(i) {
+                if (Saves[i]) {
+                    var thisButtonName = Saves[i]["showName"];
+                    var thisButtonText = Saves[i]["showText"];
+                    var temp = React.createElement(
+                        'div',
+                        { className: 'LoadSingleElement', key: i, onClick: function onClick() {
+                                LoadSavedGame(i);
+                            } },
+                        React.createElement(
+                            'div',
+                            { className: 'LSE_top' },
+                            React.createElement(
+                                'span',
+                                { className: "LSE_index" },
+                                i
+                            ),
+                            React.createElement(
+                                'span',
+                                { className: "LSE_name" },
+                                thisButtonName
+                            )
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'LSE_bottom' },
+                            thisButtonText
+                        )
+                    );
+                    _this7.SaveButtons.push(temp);
+                } else {
+                    var _temp = React.createElement(
+                        'div',
+                        { className: 'LoadSingleElement', key: i },
+                        '\u7A7A'
+                    );
+                    _this7.SaveButtons.push(_temp);
+                    // console.log(i)
+                }
+            };
+
+            for (var i = currentLoadPage * 5 + 1; i <= currentLoadPage * 5 + 5; i++) {
+                _loop4(i);
+            }
+        }
+    }]);
+
+    function LoadMainModel(props) {
+        _classCallCheck(this, LoadMainModel);
+
+        var _this5 = _possibleConstructorReturn(this, (LoadMainModel.__proto__ || Object.getPrototypeOf(LoadMainModel)).call(this, props));
+
+        _this5.Buttons = [];
+        _this5.SaveButtons = [];
+        _this5.LoadPageQty = 0;
+
+        _this5.LoadPageQty = props.PageQty;
+        _this5.state = {
+            currentPage: currentLoadPage
+        };
+        _this5.loadButtons();
+        return _this5;
+    }
+
+    _createClass(LoadMainModel, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {}
+    }, {
+        key: 'componentWillUnmount',
+        value: function componentWillUnmount() {}
+    }, {
+        key: 'render',
+        value: function render() {
+            this.loadButtons();
+            this.loadSaveButtons();
+            return React.createElement(
+                'div',
+                { id: 'LoadMain' },
+                React.createElement(
+                    'div',
+                    { id: 'LoadIndex' },
+                    this.Buttons
+                ),
+                React.createElement(
+                    'div',
+                    { id: 'LoadButtonList' },
+                    this.SaveButtons
+                )
+            );
+        }
+    }]);
+
+    return LoadMainModel;
+}(React.Component);
+
+function onSaveGame() {
+    loadCookie();
+    document.getElementById('Save').style.display = 'block';
+    ReactDOM.render(React.createElement(SaveMainModel, { PageQty: 5 }), document.getElementById('SaveItems'));
+}
+
+function closeSave() {
+    document.getElementById('Save').style.display = 'none';
+}
+
+var SaveMainModel = function (_React$Component4) {
+    _inherits(SaveMainModel, _React$Component4);
+
+    _createClass(SaveMainModel, [{
+        key: 'setCurrentPage',
+        value: function setCurrentPage(page) {
+            currentSavePage = page;
+            this.setState({
+                currentPage: currentSavePage
+            });
+            writeCookie();
+        }
+    }, {
+        key: 'loadButtons',
+        value: function loadButtons() {
+            var _this9 = this;
+
+            this.Buttons = [];
+
+            var _loop5 = function _loop5(i) {
+                var temp = React.createElement(
+                    'span',
+                    { className: 'SaveIndexButton', onClick: function onClick() {
+                            _this9.setCurrentPage(i);
+                        }, key: i },
+                    i + 1
+                );
+                if (i === currentSavePage) temp = React.createElement(
+                    'span',
+                    { className: 'SaveIndexButtonOn', onClick: function onClick() {
+                            _this9.setCurrentPage(i);
+                        }, key: i },
+                    i + 1
+                );
+                _this9.Buttons.push(temp);
+            };
+
+            for (var i = 0; i < this.LoadPageQty; i++) {
+                _loop5(i);
+            }
+        }
+    }, {
+        key: 'loadSaveButtons',
+        value: function loadSaveButtons() {
+            var _this10 = this;
+
+            this.SaveButtons = [];
+
+            var _loop6 = function _loop6(i) {
+                if (Saves[i]) {
+                    var thisButtonName = Saves[i]["showName"];
+                    var thisButtonText = Saves[i]["showText"];
+                    var temp = React.createElement(
+                        'div',
+                        { className: 'SaveSingleElement', key: i, onClick: function onClick() {
+                                _this10.save_onSaved(i);
+                            } },
+                        React.createElement(
+                            'div',
+                            { className: 'SSE_top' },
+                            React.createElement(
+                                'span',
+                                { className: "SSE_index" },
+                                i
+                            ),
+                            React.createElement(
+                                'span',
+                                { className: "SSE_name" },
+                                thisButtonName
+                            )
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'SSE_bottom' },
+                            thisButtonText
+                        )
+                    );
+                    _this10.SaveButtons.push(temp);
+                } else {
+                    var _temp2 = React.createElement(
+                        'div',
+                        { className: 'SaveSingleElement', key: i, onClick: function onClick() {
+                                _this10.save_NonSaved(i);
+                            } },
+                        '\u7A7A'
+                    );
+                    _this10.SaveButtons.push(_temp2);
+                    // console.log(i)
+                }
+            };
+
+            for (var i = currentSavePage * 5 + 1; i <= currentSavePage * 5 + 5; i++) {
+                _loop6(i);
+            }
+        }
+    }, {
+        key: 'save_NonSaved',
+        value: function save_NonSaved(index) {
+            saveGame(index);
+            writeCookie();
+            closeSave();
+        }
+    }, {
+        key: 'save_onSaved',
+        value: function save_onSaved(index) {
+            saveGame(index);
+            writeCookie();
+            closeSave();
+        }
+    }]);
+
+    function SaveMainModel(props) {
+        _classCallCheck(this, SaveMainModel);
+
+        var _this8 = _possibleConstructorReturn(this, (SaveMainModel.__proto__ || Object.getPrototypeOf(SaveMainModel)).call(this, props));
+
+        _this8.Buttons = [];
+        _this8.SaveButtons = [];
+        _this8.LoadPageQty = 0;
+
+        _this8.LoadPageQty = props.PageQty;
+        _this8.state = {
+            currentPage: currentSavePage
+        };
+        _this8.loadButtons();
+        return _this8;
+    }
+
+    _createClass(SaveMainModel, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {}
+    }, {
+        key: 'componentWillUnmount',
+        value: function componentWillUnmount() {}
+    }, {
+        key: 'render',
+        value: function render() {
+            this.loadButtons();
+            this.loadSaveButtons();
+            return React.createElement(
+                'div',
+                { id: 'SaveMain' },
+                React.createElement(
+                    'div',
+                    { id: 'SaveIndex' },
+                    this.Buttons
+                ),
+                React.createElement(
+                    'div',
+                    { id: 'SaveButtonList' },
+                    this.SaveButtons
+                )
+            );
+        }
+    }]);
+
+    return SaveMainModel;
+}(React.Component);
+
+var ChooseModel = function (_React$Component5) {
+    _inherits(ChooseModel, _React$Component5);
+
+    function ChooseModel(props) {
+        _classCallCheck(this, ChooseModel);
+
+        var _this11 = _possibleConstructorReturn(this, (ChooseModel.__proto__ || Object.getPrototypeOf(ChooseModel)).call(this, props));
+
+        _this11.state = {
+            Title: props.Title,
+            LeftChoose: props.LeftChoose,
+            RightChoose: props.RightChoose
+        };
+        return _this11;
+    }
+
+    return ChooseModel;
+}(React.Component);
