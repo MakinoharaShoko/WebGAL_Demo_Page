@@ -66,10 +66,23 @@ function writeCookie() {
     document.cookie = JSON.stringify(toCookie);
 }
 
+function clearCookie() {
+    var toCookie = {
+        SavedGame: [],
+        SP: 0,
+        LP: 0,
+        cSettings: {
+            font_size: 'medium',
+            play_speed: 'medium'
+        }
+    };
+    document.cookie = JSON.stringify(toCookie);
+}
+
 // 读取游戏存档
 function LoadSavedGame(index) {
     closeLoad();
-    hideTitle();
+    hideTitle('non-restart');
     var save = Saves[index];
     //get Scene:
     var url = 'game/scene/';
@@ -110,8 +123,8 @@ function LoadSavedGame(index) {
                 //load saved scene:
                 var command = save["command"];
                 // console.log('readSaves:'+command)
-                document.getElementById('mainBackground').style.backgroundImage = "url('game/background/" + save["bg_Name"] + "')";
-                if (save["fig_Name"] === 'none') {
+                if (save["bg_Name"] !== '') document.getElementById('mainBackground').style.backgroundImage = "url('game/background/" + save["bg_Name"] + "')";
+                if (save["fig_Name"] === '') {
                     ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
                 } else {
                     var pUrl = "game/figure/" + save["fig_Name"];
@@ -186,7 +199,7 @@ function getScene(url) {
 
     var getScReq = null;
     getScReq = new XMLHttpRequest();
-
+    console.log('now read scene');
     if (getScReq != null) {
         getScReq.open("get", url, true);
         getScReq.send();
@@ -222,9 +235,7 @@ function getScene(url) {
 window.onload = function () {
     loadCookie();
     loadSettings();
-    document.getElementById('Title').style.backgroundImage = 'url("game/background/Title1.png")';
-    getScene("/game/scene/start.txt");
-    currentInfo["SceneName"] = 'start.txt';
+    document.getElementById('Title').style.backgroundImage = 'url("./game/background/Title.png")';
 };
 
 function loadSettings() {
@@ -472,7 +483,9 @@ function onSetting() {
             React.createElement(SettingButtons_speed, null),
             React.createElement(
                 'div',
-                { className: "deleteCookie" },
+                { className: "deleteCookie", onClick: function onClick() {
+                        showMesModel('你确定要清除缓存吗', '要', '不要', clearCookie);
+                    } },
                 '\u6E05\u9664\u6240\u6709\u8BBE\u7F6E\u9009\u9879\u4EE5\u53CA\u5B58\u6863'
             ),
             React.createElement('br', null),
@@ -751,16 +764,18 @@ var SettingButtons_speed = function (_React$Component2) {
     return SettingButtons_speed;
 }(React.Component);
 
-function hideTitle() {
+function hideTitle(ifRes) {
     document.getElementById('Title').style.display = 'none';
-    getScene("game/scene/start.txt");
-    currentInfo["SceneName"] = 'start.txt';
+    if (ifRes !== 'non-restart') {
+        getScene("game/scene/start.txt");
+        currentInfo["SceneName"] = 'start.txt';
+    }
 }
 
 function onLoadGame() {
     loadCookie();
     document.getElementById('Load').style.display = 'block';
-    ReactDOM.render(React.createElement(LoadMainModel, { PageQty: 5 }), document.getElementById('LoadItems'));
+    ReactDOM.render(React.createElement(LoadMainModel, { PageQty: 15 }), document.getElementById('LoadItems'));
 }
 
 function closeLoad() {
@@ -913,7 +928,7 @@ var LoadMainModel = function (_React$Component3) {
 function onSaveGame() {
     loadCookie();
     document.getElementById('Save').style.display = 'block';
-    ReactDOM.render(React.createElement(SaveMainModel, { PageQty: 5 }), document.getElementById('SaveItems'));
+    ReactDOM.render(React.createElement(SaveMainModel, { PageQty: 15 }), document.getElementById('SaveItems'));
 }
 
 function closeSave() {
@@ -1020,14 +1035,21 @@ var SaveMainModel = function (_React$Component4) {
         value: function save_NonSaved(index) {
             saveGame(index);
             writeCookie();
-            closeSave();
+            this.setState({
+                currentPage: currentSavePage
+            });
         }
     }, {
         key: 'save_onSaved',
         value: function save_onSaved(index) {
-            saveGame(index);
-            writeCookie();
-            closeSave();
+            showMesModel('你要覆盖这个存档吗', '覆盖', '不', function () {
+                saveGame(index);
+                writeCookie();
+                closeSave();
+            });
+            this.setState({
+                currentPage: currentSavePage
+            });
         }
     }]);
 
@@ -1079,21 +1101,54 @@ var SaveMainModel = function (_React$Component4) {
     return SaveMainModel;
 }(React.Component);
 
-var ChooseModel = function (_React$Component5) {
-    _inherits(ChooseModel, _React$Component5);
+function showMesModel(Title, Left, Right, func) {
+    document.getElementById('MesModel').style.display = 'block';
+    var element = React.createElement(
+        'div',
+        { className: 'MesMainWindow' },
+        React.createElement(
+            'div',
+            { className: "MesTitle" },
+            Title
+        ),
+        React.createElement(
+            'div',
+            { className: 'MesChooseContainer' },
+            React.createElement(
+                'div',
+                { className: 'MesChoose', onClick: function onClick() {
+                        func();document.getElementById('MesModel').style.display = 'none';
+                    } },
+                Left
+            ),
+            React.createElement(
+                'div',
+                { className: 'MesChoose', onClick: function onClick() {
+                        document.getElementById('MesModel').style.display = 'none';
+                    } },
+                Right
+            )
+        )
+    );
+    ReactDOM.render(element, document.getElementById('MesModel'));
+}
 
-    function ChooseModel(props) {
-        _classCallCheck(this, ChooseModel);
+function exit() {
+    showMesModel('你确定要退出吗', '退出', '留在本页', function () {
+        window.close();
+    });
+}
 
-        var _this11 = _possibleConstructorReturn(this, (ChooseModel.__proto__ || Object.getPrototypeOf(ChooseModel)).call(this, props));
+function Title() {
+    showMesModel('要返回到标题界面吗', '是', '不要', function () {
+        document.getElementById('Title').style.display = 'block';
+    });
+}
 
-        _this11.state = {
-            Title: props.Title,
-            LeftChoose: props.LeftChoose,
-            RightChoose: props.RightChoose
-        };
-        return _this11;
+function continueGame() {
+    if (currentScene === '') {
+        getScene("game/scene/start.txt");
+        currentInfo["SceneName"] = 'start.txt';
     }
-
-    return ChooseModel;
-}(React.Component);
+    document.getElementById('Title').style.display = 'none';
+}
