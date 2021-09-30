@@ -494,6 +494,17 @@ function onSetting() {
                     } },
                 '\u6E05\u9664\u6240\u6709\u8BBE\u7F6E\u9009\u9879\u4EE5\u53CA\u5B58\u6863'
             ),
+            React.createElement(
+                'div',
+                null,
+                '\u672C\u4F5C\u54C1\u7531 WebGAL \u5F3A\u529B\u9A71\u52A8\uFF0C',
+                React.createElement(
+                    'a',
+                    { href: "https://github.com/MakinoharaShoko/WebGAL" },
+                    '\u4E86\u89E3 WebGAL'
+                ),
+                '\u3002'
+            ),
             React.createElement('br', null),
             React.createElement(
                 'div',
