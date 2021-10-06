@@ -356,13 +356,13 @@ function nextSentenceProcessor() {
         return;
     } else if (command === 'changeP_right_next') {
         if (thisSentence[1] === 'none') {
-            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
             currentInfo["fig_Name"] = 'none';
         } else {
             var _pUrl4 = "game/figure/" + thisSentence[1];
             var _changedP4 = React.createElement('img', { src: _pUrl4, alt: 'figure', className: 'p_center' });
             // console.log('now changing person');
-            ReactDOM.render(_changedP4, document.getElementById('figureImage_left'));
+            ReactDOM.render(_changedP4, document.getElementById('figureImage_right'));
             currentInfo["fig_Name"] = thisSentence[1];
         }
         currentSentence = currentSentence + 1;
