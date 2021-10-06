@@ -28,9 +28,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         showName: '',
         command: '',
         choose: '',
-        currentText: 0
+        currentText: 0,
+        vocal: '',
+        bgm: ''
     };
     var onTextPreview = 0;
+    var currentName = '';
 }
 
 // 初始化存档系统
@@ -182,6 +185,7 @@ function LoadSavedGame(index) {
                 // let changedText = <p>{processSentence(currentSentence)['text']}</p>
                 ReactDOM.render(changedName, document.getElementById('pName'));
                 currentText = save["currentText"];
+                playVocal();
                 showTextArray(textArray, currentText);
                 // currentText = currentText + 1;
 
@@ -222,6 +226,7 @@ function getScene(url) {
                     var tempSentence = currentScene[i].split(";")[0];
                     var commandLength = tempSentence.split(":")[0].length;
                     var command = currentScene[i].split(":")[0];
+                    command = command.split(';')[0];
                     var content = tempSentence.slice(commandLength + 1);
                     currentScene[i] = currentScene[i].split(":");
                     currentScene[i][0] = command;
@@ -264,7 +269,25 @@ function loadSettings() {
 
 // 处理脚本
 function processSentence(i) {
-    if (i < currentScene.length) return { name: currentScene[i][0], text: currentScene[i][1] };
+    if (i < currentScene.length) {
+        var vocal = '';
+        if (currentScene[i][1] !== '') {
+            var text = currentScene[i][1];
+            if (currentScene[i][1].split('vocal-').length > 1) {
+                vocal = currentScene[i][1].split('vocal-')[1].split(',')[0];
+                text = currentScene[i][1].split('vocal-')[1].slice(currentScene[i][1].split('vocal-')[1].split(',')[0].length + 1);
+            }
+            currentName = currentScene[i][0];
+            return { name: currentName, text: text, vocal: vocal };
+        } else {
+            var _text = currentScene[i][0];
+            if (currentScene[i][0].split('vocal-').length > 1) {
+                vocal = currentScene[i][0].split('vocal-')[1].split(',')[0];
+                _text = currentScene[i][0].split('vocal-')[1].slice(currentScene[i][0].split('vocal-')[1].split(',')[0].length + 1);
+            }
+            return { name: currentName, text: _text, vocal: vocal };
+        }
+    }
 }
 
 // 读取下一条脚本
@@ -293,15 +316,67 @@ function nextSentenceProcessor() {
             currentInfo["fig_Name"] = thisSentence[1];
         }
         autoPlay('on');
+    } else if (command === 'changeP_left') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = 'none';
+        } else {
+            var _pUrl = "game/figure/" + thisSentence[1];
+            var _changedP = React.createElement('img', { src: _pUrl, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP, document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = thisSentence[1];
+        }
+        autoPlay('on');
+    } else if (command === 'changeP_right') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
+            currentInfo["fig_Name"] = 'none';
+        } else {
+            var _pUrl2 = "game/figure/" + thisSentence[1];
+            var _changedP2 = React.createElement('img', { src: _pUrl2, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP2, document.getElementById('figureImage_right'));
+            currentInfo["fig_Name"] = thisSentence[1];
+        }
+        autoPlay('on');
+    } else if (command === 'changeP_left_next') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = 'none';
+        } else {
+            var _pUrl3 = "game/figure/" + thisSentence[1];
+            var _changedP3 = React.createElement('img', { src: _pUrl3, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP3, document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = thisSentence[1];
+        }
+        currentSentence = currentSentence + 1;
+        nextSentenceProcessor();
+        return;
+    } else if (command === 'changeP_right_next') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = 'none';
+        } else {
+            var _pUrl4 = "game/figure/" + thisSentence[1];
+            var _changedP4 = React.createElement('img', { src: _pUrl4, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP4, document.getElementById('figureImage_left'));
+            currentInfo["fig_Name"] = thisSentence[1];
+        }
+        currentSentence = currentSentence + 1;
+        nextSentenceProcessor();
+        return;
     } else if (command === 'changeP_next') {
         if (thisSentence[1] === 'none') {
             ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
             currentInfo["fig_Name"] = thisSentence[1];
         } else {
-            var _pUrl = "game/figure/" + thisSentence[1];
-            var _changedP = React.createElement('img', { src: _pUrl, alt: 'figure', className: 'p_center' });
+            var _pUrl5 = "game/figure/" + thisSentence[1];
+            var _changedP5 = React.createElement('img', { src: _pUrl5, alt: 'figure', className: 'p_center' });
             // console.log('now changing person');
-            ReactDOM.render(_changedP, document.getElementById('figureImage'));
+            ReactDOM.render(_changedP5, document.getElementById('figureImage'));
             currentInfo["fig_Name"] = thisSentence[1];
         }
         currentSentence = currentSentence + 1;
@@ -358,10 +433,17 @@ function nextSentenceProcessor() {
         }();
 
         if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+    } else if (command === 'bgm') {
+        currentInfo["bgm"] = thisSentence[1];
+        loadBGM();
+        currentSentence = currentSentence + 1;
+        nextSentenceProcessor();
+        return;
     } else {
         currentInfo["command"] = processSentence(currentSentence)['name'];
         currentInfo["showName"] = processSentence(currentSentence)['name'];
         currentInfo["showText"] = processSentence(currentSentence)['text'];
+        currentInfo["vocal"] = processSentence(currentSentence)['vocal'];
         var changedName = React.createElement(
             'span',
             null,
@@ -370,6 +452,9 @@ function nextSentenceProcessor() {
         var textArray = processSentence(currentSentence)['text'].split("");
         // let changedText = <p>{processSentence(currentSentence)['text']}</p>
         ReactDOM.render(changedName, document.getElementById('pName'));
+        if (currentInfo["vocal"] !== '') {
+            playVocal();
+        }
         showTextArray(textArray, currentText + 1);
         currentText = currentText + 1;
         currentInfo["currentText"] = currentText;
@@ -415,9 +500,17 @@ function showTextArray(textArray, now) {
         ), document.getElementById('SceneText'));
         i = i + 1;
         if (i > textArray.length + autoWaitTime / 35 || currentText !== now) {
-            clearInterval(interval);
+
             if (auto === 1 && currentText === now) {
-                nextSentenceProcessor();
+                if (document.getElementById('currentVocal') && fast === 0) {
+                    if (document.getElementById('currentVocal').ended) {
+                        clearInterval(interval);
+                        nextSentenceProcessor();
+                    }
+                } else {
+                    clearInterval(interval);
+                    nextSentenceProcessor();
+                }
             }
         }
     }
@@ -649,7 +742,7 @@ var SettingButtons_font = function (_React$Component) {
             var _this2 = this;
 
             return React.createElement(
-                'div',
+                'span',
                 { className: 'singleSettingItem' },
                 React.createElement(
                     'span',
@@ -746,7 +839,7 @@ var SettingButtons_speed = function (_React$Component2) {
             var _this4 = this;
 
             return React.createElement(
-                'div',
+                'span',
                 { className: 'singleSettingItem' },
                 React.createElement(
                     'span',
@@ -1168,4 +1261,29 @@ function continueGame() {
         currentInfo["SceneName"] = 'start.txt';
     }
     document.getElementById('Title').style.display = 'none';
+}
+
+function loadBGM() {
+    var bgmName = currentInfo["bgm"];
+    if (bgmName === '' || bgmName === 'none') {
+        ReactDOM.render(React.createElement('div', null), document.getElementById("bgm"));
+        return;
+    }
+    var url = "./game/bgm/" + bgmName;
+    var audio = React.createElement('audio', { src: url, id: "currentBGM" });
+    ReactDOM.render(audio, document.getElementById("bgm"));
+    var playControl = document.getElementById("currentBGM");
+    playControl.currentTime = 0;
+    playControl.volume = 0.25;
+    playControl.play();
+}
+
+function playVocal() {
+    var vocalName = currentInfo["vocal"];
+    var url = './game/vocal/' + vocalName;
+    var vocal = React.createElement('audio', { src: url, id: "currentVocal" });
+    ReactDOM.render(vocal, document.getElementById('vocal'));
+    var VocalControl = document.getElementById("currentVocal");
+    VocalControl.currentTime = 0;
+    VocalControl.play();
 }
