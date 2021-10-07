@@ -902,14 +902,14 @@ function hideTitle(ifRes) {
     if (ifRes !== 'non-restart') {
         currentInfo["bgm"] = '';
         loadBGM();
-        getScene("game/scene/start.txt");
-        currentInfo["SceneName"] = 'start.txt';
         ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
         currentInfo["fig_Name"] = '';
         ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
         currentInfo["fig_left"] = '';
         ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
         currentInfo["fig_right"] = '';
+        getScene("game/scene/start.txt");
+        currentInfo["SceneName"] = 'start.txt';
     }
 }
 
