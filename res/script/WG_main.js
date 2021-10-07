@@ -24,6 +24,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         SentenceID: 0,
         bg_Name: '',
         fig_Name: '',
+        fig_Name_left: '',
+        fig_Name_right: '',
         showText: '',
         showName: '',
         command: '',
@@ -50,11 +52,11 @@ var Settings = {
 };
 
 function loadCookie() {
-    if (document.cookie) {
+    if (localStorage.getItem('WebGAL')) {
         // let pre_process = document.cookie;
         // let fst = pre_process.split(';')[0];
         // let scd = document.cookie.slice(fst.length+1);
-        var data = JSON.parse(document.cookie);
+        var data = JSON.parse(localStorage.getItem('WebGAL'));
         Saves = data.SavedGame;
         currentSavePage = data.SP;
         currentLoadPage = data.LP;
@@ -63,16 +65,16 @@ function loadCookie() {
 }
 
 function writeCookie() {
-    var expire = new Date(new Date().getTime() + 20000 * 24 * 60 * 60000); //有效期20000天
-    expire = ";expires=" + expire.toGMTString();
+    // var expire = new Date((new Date()).getTime() + 20000 * 24 * 60 * 60000);//有效期20000天
+    // expire = ";expires=" + expire.toGMTString();
     var toCookie = {
         SavedGame: Saves,
         SP: currentSavePage,
         LP: currentLoadPage,
         cSettings: Settings
-    };
-    console.log(JSON.stringify(toCookie) + expire);
-    document.cookie = JSON.stringify(toCookie) + expire;
+        // console.log(JSON.stringify(toCookie));
+    };localStorage.setItem('WebGAL', JSON.stringify(toCookie));
+    // document.cookie = JSON.stringify(toCookie);
 }
 
 function clearCookie() {
@@ -85,7 +87,7 @@ function clearCookie() {
             play_speed: 'medium'
         }
     };
-    document.cookie = JSON.stringify(toCookie);
+    localStorage.setItem('WebGAL', JSON.stringify(toCookie));
 }
 
 // 读取游戏存档
@@ -141,6 +143,22 @@ function LoadSavedGame(index) {
                     // console.log('now changing person');
                     ReactDOM.render(changedP, document.getElementById('figureImage'));
                 }
+                if (save["fig_Name_left"] === '') {
+                    ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+                } else {
+                    var _pUrl = "game/figure/" + save["fig_Name_left"];
+                    var _changedP = React.createElement('img', { src: _pUrl, alt: 'figure', className: 'p_center' });
+                    // console.log('now changing person');
+                    ReactDOM.render(_changedP, document.getElementById('figureImage_left'));
+                }
+                if (save["fig_Name_right"] === '') {
+                    ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
+                } else {
+                    var _pUrl2 = "game/figure/" + save["fig_Name_right"];
+                    var _changedP2 = React.createElement('img', { src: _pUrl2, alt: 'figure', className: 'p_center' });
+                    // console.log('now changing person');
+                    ReactDOM.render(_changedP2, document.getElementById('figureImage_right'));
+                }
 
                 if (command === 'choose') {
                     (function () {
@@ -185,6 +203,7 @@ function LoadSavedGame(index) {
                 // let changedText = <p>{processSentence(currentSentence)['text']}</p>
                 ReactDOM.render(changedName, document.getElementById('pName'));
                 currentText = save["currentText"];
+                currentInfo["vocal"] = save['vocal'];
                 playVocal();
                 showTextArray(textArray, currentText);
                 // currentText = currentText + 1;
@@ -319,37 +338,37 @@ function nextSentenceProcessor() {
     } else if (command === 'changeP_left') {
         if (thisSentence[1] === 'none') {
             ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
-            currentInfo["fig_Name"] = 'none';
-        } else {
-            var _pUrl = "game/figure/" + thisSentence[1];
-            var _changedP = React.createElement('img', { src: _pUrl, alt: 'figure', className: 'p_center' });
-            // console.log('now changing person');
-            ReactDOM.render(_changedP, document.getElementById('figureImage_left'));
-            currentInfo["fig_Name"] = thisSentence[1];
-        }
-        autoPlay('on');
-    } else if (command === 'changeP_right') {
-        if (thisSentence[1] === 'none') {
-            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
-            currentInfo["fig_Name"] = 'none';
-        } else {
-            var _pUrl2 = "game/figure/" + thisSentence[1];
-            var _changedP2 = React.createElement('img', { src: _pUrl2, alt: 'figure', className: 'p_center' });
-            // console.log('now changing person');
-            ReactDOM.render(_changedP2, document.getElementById('figureImage_right'));
-            currentInfo["fig_Name"] = thisSentence[1];
-        }
-        autoPlay('on');
-    } else if (command === 'changeP_left_next') {
-        if (thisSentence[1] === 'none') {
-            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
-            currentInfo["fig_Name"] = 'none';
+            currentInfo["fig_Name_left"] = 'none';
         } else {
             var _pUrl3 = "game/figure/" + thisSentence[1];
             var _changedP3 = React.createElement('img', { src: _pUrl3, alt: 'figure', className: 'p_center' });
             // console.log('now changing person');
             ReactDOM.render(_changedP3, document.getElementById('figureImage_left'));
-            currentInfo["fig_Name"] = thisSentence[1];
+            currentInfo["fig_Name_left"] = thisSentence[1];
+        }
+        autoPlay('on');
+    } else if (command === 'changeP_right') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
+            currentInfo["fig_Name_right"] = 'none';
+        } else {
+            var _pUrl4 = "game/figure/" + thisSentence[1];
+            var _changedP4 = React.createElement('img', { src: _pUrl4, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP4, document.getElementById('figureImage_right'));
+            currentInfo["fig_Name_right"] = thisSentence[1];
+        }
+        autoPlay('on');
+    } else if (command === 'changeP_left_next') {
+        if (thisSentence[1] === 'none') {
+            ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+            currentInfo["fig_Name_left"] = 'none';
+        } else {
+            var _pUrl5 = "game/figure/" + thisSentence[1];
+            var _changedP5 = React.createElement('img', { src: _pUrl5, alt: 'figure', className: 'p_center' });
+            // console.log('now changing person');
+            ReactDOM.render(_changedP5, document.getElementById('figureImage_left'));
+            currentInfo["fig_Name_left"] = thisSentence[1];
         }
         currentSentence = currentSentence + 1;
         nextSentenceProcessor();
@@ -357,13 +376,13 @@ function nextSentenceProcessor() {
     } else if (command === 'changeP_right_next') {
         if (thisSentence[1] === 'none') {
             ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
-            currentInfo["fig_Name"] = 'none';
+            currentInfo["fig_Name_right"] = 'none';
         } else {
-            var _pUrl4 = "game/figure/" + thisSentence[1];
-            var _changedP4 = React.createElement('img', { src: _pUrl4, alt: 'figure', className: 'p_center' });
+            var _pUrl6 = "game/figure/" + thisSentence[1];
+            var _changedP6 = React.createElement('img', { src: _pUrl6, alt: 'figure', className: 'p_center' });
             // console.log('now changing person');
-            ReactDOM.render(_changedP4, document.getElementById('figureImage_right'));
-            currentInfo["fig_Name"] = thisSentence[1];
+            ReactDOM.render(_changedP6, document.getElementById('figureImage_right'));
+            currentInfo["fig_Name_right"] = thisSentence[1];
         }
         currentSentence = currentSentence + 1;
         nextSentenceProcessor();
@@ -373,10 +392,10 @@ function nextSentenceProcessor() {
             ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
             currentInfo["fig_Name"] = thisSentence[1];
         } else {
-            var _pUrl5 = "game/figure/" + thisSentence[1];
-            var _changedP5 = React.createElement('img', { src: _pUrl5, alt: 'figure', className: 'p_center' });
+            var _pUrl7 = "game/figure/" + thisSentence[1];
+            var _changedP7 = React.createElement('img', { src: _pUrl7, alt: 'figure', className: 'p_center' });
             // console.log('now changing person');
-            ReactDOM.render(_changedP5, document.getElementById('figureImage'));
+            ReactDOM.render(_changedP7, document.getElementById('figureImage'));
             currentInfo["fig_Name"] = thisSentence[1];
         }
         currentSentence = currentSentence + 1;
@@ -877,8 +896,15 @@ var SettingButtons_speed = function (_React$Component2) {
 function hideTitle(ifRes) {
     document.getElementById('Title').style.display = 'none';
     if (ifRes !== 'non-restart') {
+        currentInfo["bgm"] = '';
         getScene("game/scene/start.txt");
         currentInfo["SceneName"] = 'start.txt';
+        ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
+        currentInfo["fig_Name"] = '';
+        ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_left'));
+        currentInfo["fig_left"] = '';
+        ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage_right'));
+        currentInfo["fig_right"] = '';
     }
 }
 
