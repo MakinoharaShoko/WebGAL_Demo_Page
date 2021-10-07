@@ -204,6 +204,10 @@ function LoadSavedGame(index) {
                 ReactDOM.render(changedName, document.getElementById('pName'));
                 currentText = save["currentText"];
                 currentInfo["vocal"] = save['vocal'];
+                if (currentInfo['bgm'] !== save['bgm']) {
+                    currentInfo['bgm'] = save['bgm'];
+                    loadBGM();
+                }
                 playVocal();
                 showTextArray(textArray, currentText);
                 // currentText = currentText + 1;
@@ -897,6 +901,7 @@ function hideTitle(ifRes) {
     document.getElementById('Title').style.display = 'none';
     if (ifRes !== 'non-restart') {
         currentInfo["bgm"] = '';
+        loadBGM();
         getScene("game/scene/start.txt");
         currentInfo["SceneName"] = 'start.txt';
         ReactDOM.render(React.createElement('div', null), document.getElementById('figureImage'));
@@ -1296,7 +1301,7 @@ function loadBGM() {
         return;
     }
     var url = "./game/bgm/" + bgmName;
-    var audio = React.createElement('audio', { src: url, id: "currentBGM" });
+    var audio = React.createElement('audio', { src: url, id: "currentBGM", loop: 'loop' });
     ReactDOM.render(audio, document.getElementById("bgm"));
     var playControl = document.getElementById("currentBGM");
     playControl.currentTime = 0;
