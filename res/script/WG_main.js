@@ -36,6 +36,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     };
     var onTextPreview = 0;
     var currentName = '';
+    var showingText = false;
 }
 
 // 初始化存档系统
@@ -280,6 +281,11 @@ window.onload = function () {
     loadCookie();
     loadSettings();
     document.getElementById('Title').style.backgroundImage = 'url("./game/background/Title.png")';
+    if (isMobile()) {
+        console.log("nowis mobile view");
+        document.getElementById('bottomBox').style.height = '45%';
+        document.getElementById('TitleModel').style.height = '20%';
+    }
 };
 
 function loadSettings() {
@@ -325,6 +331,10 @@ function processSentence(i) {
 
 // 读取下一条脚本
 function nextSentenceProcessor() {
+    if (showingText) {
+        showingText = false;
+        return;
+    }
     var saveBacklogNow = false;
     if (currentSentence >= currentScene.length) {
         return;
@@ -472,6 +482,70 @@ function nextSentenceProcessor() {
         currentSentence = currentSentence + 1;
         nextSentenceProcessor();
         return;
+    } else if (command === 'choose_label') {
+        var _ret5 = function () {
+
+            currentInfo["command"] = command;
+            document.getElementById('chooseBox').style.display = 'flex';
+            var chooseItems = thisSentence[1];
+            currentInfo["choose"] = chooseItems;
+            chooseItems = chooseItems.split("}")[0];
+            chooseItems = chooseItems.split("{")[1];
+            var selection = chooseItems.split(',');
+            for (var i = 0; i < selection.length; i++) {
+                selection[i] = selection[i].split(":");
+            }
+            var elements = [];
+
+            var _loop3 = function _loop3(_i4) {
+                var temp = React.createElement(
+                    'div',
+                    { className: 'singleChoose', key: _i4, onClick: function onClick() {
+                            chooseJumpFun(selection[_i4][1]);
+                        } },
+                    selection[_i4][0]
+                );
+                elements.push(temp);
+            };
+
+            for (var _i4 = 0; _i4 < selection.length; _i4++) {
+                _loop3(_i4);
+            }
+            ReactDOM.render(React.createElement(
+                'div',
+                null,
+                elements
+            ), document.getElementById('chooseBox'));
+            return {
+                v: void 0
+            };
+        }();
+
+        if ((typeof _ret5 === 'undefined' ? 'undefined' : _typeof(_ret5)) === "object") return _ret5.v;
+    } else if (command === 'jump_label') {
+        var lab_name = thisSentence[1];
+        //find the line of the label:
+        var find = false;
+        var jmp_sentence = 0;
+        for (var i = 0; i < currentScene.length; i++) {
+            if (currentScene[i][0] === 'label' && currentScene[i][1] === lab_name) {
+                find = true;
+                jmp_sentence = i;
+            }
+        }
+        if (find) {
+            currentSentence = jmp_sentence;
+            nextSentenceProcessor();
+            return;
+        } else {
+            currentSentence = currentSentence + 1;
+            nextSentenceProcessor();
+            return;
+        }
+    } else if (command === 'label') {
+        currentSentence = currentSentence + 1;
+        nextSentenceProcessor();
+        return;
     } else {
         currentInfo["command"] = processSentence(currentSentence)['name'];
         currentInfo["showName"] = processSentence(currentSentence)['name'];
@@ -522,6 +596,7 @@ function nextSentenceProcessor() {
 
 // 渐显文字
 function showTextArray(textArray, now) {
+    showingText = false;
     ReactDOM.render(React.createElement(
         'span',
         null,
@@ -532,32 +607,62 @@ function showTextArray(textArray, now) {
     clearInterval(interval);
     var interval = setInterval(showSingle, textShowWatiTime);
     // console.log("now: "+now+" currentText: "+currentText)
+    showingText = true;
     function showSingle() {
-        var tempElement = React.createElement(
-            'span',
-            { key: i, className: 'singleWord' },
-            textArray[i]
-        );
-        elementArray.push(tempElement);
-        if (currentText === now) ReactDOM.render(React.createElement(
-            'div',
-            null,
-            elementArray
-        ), document.getElementById('SceneText'));
-        i = i + 1;
+        if (!showingText) {
+            var textFull = '';
+            for (var j = 0; j < textArray.length; j++) {
+                textFull = textFull + textArray[j];
+            }
+            ReactDOM.render(React.createElement(
+                'div',
+                null,
+                textFull
+            ), document.getElementById('SceneText'));
+            if (auto === 1) {
+                if (i < textArray.length + 1) {
+                    i = textArray.length + 1;
+                } else {
+                    i = i + 1;
+                }
+            } else {
+                i = textArray.length + 1 + autoWaitTime / 35;
+            }
+        } else {
+            var tempElement = React.createElement(
+                'span',
+                { key: i, className: 'singleWord' },
+                textArray[i]
+            );
+            elementArray.push(tempElement);
+            if (currentText === now) ReactDOM.render(React.createElement(
+                'div',
+                null,
+                elementArray
+            ), document.getElementById('SceneText'));
+            i = i + 1;
+        }
+        if (i > textArray.length && auto !== 1) {
+            showingText = false;
+        }
         if (i > textArray.length + autoWaitTime / 35 || currentText !== now) {
 
             if (auto === 1 && currentText === now) {
                 if (document.getElementById('currentVocal') && fast === 0) {
                     if (document.getElementById('currentVocal').ended) {
                         clearInterval(interval);
+                        showingText = false;
                         nextSentenceProcessor();
                     }
                 } else {
                     clearInterval(interval);
+                    showingText = false;
                     nextSentenceProcessor();
                 }
-            } else clearInterval(interval);
+            } else {
+                showingText = false;
+                clearInterval(interval);
+            }
         }
     }
 }
@@ -612,6 +717,28 @@ function showTextPreview(text) {
                 document.getElementById('previewDiv').style.fontSize = '250%';
             }
         }
+    }
+}
+
+function chooseJumpFun(label) {
+    var lab_name = label;
+    //find the line of the label:
+    var find = false;
+    var jmp_sentence = 0;
+    for (var i = 0; i < currentScene.length; i++) {
+        if (currentScene[i][0] === 'label' && currentScene[i][1] === lab_name) {
+            find = true;
+            jmp_sentence = i;
+        }
+    }
+    if (find) {
+        currentSentence = jmp_sentence;
+        nextSentenceProcessor();
+        document.getElementById("chooseBox").style.display = "none";
+    } else {
+        currentSentence = currentSentence + 1;
+        nextSentenceProcessor();
+        document.getElementById("chooseBox").style.display = "none";
     }
 }
 
@@ -966,7 +1093,7 @@ var LoadMainModel = function (_React$Component3) {
 
             this.Buttons = [];
 
-            var _loop3 = function _loop3(i) {
+            var _loop4 = function _loop4(i) {
                 var temp = React.createElement(
                     'span',
                     { className: 'LoadIndexButton', onClick: function onClick() {
@@ -985,7 +1112,7 @@ var LoadMainModel = function (_React$Component3) {
             };
 
             for (var i = 0; i < this.LoadPageQty; i++) {
-                _loop3(i);
+                _loop4(i);
             }
         }
     }, {
@@ -995,7 +1122,7 @@ var LoadMainModel = function (_React$Component3) {
 
             this.SaveButtons = [];
 
-            var _loop4 = function _loop4(i) {
+            var _loop5 = function _loop5(i) {
                 if (Saves[i]) {
                     var thisButtonName = Saves[i]["showName"];
                     var thisButtonText = Saves[i]["showText"];
@@ -1037,7 +1164,7 @@ var LoadMainModel = function (_React$Component3) {
             };
 
             for (var i = currentLoadPage * 5 + 1; i <= currentLoadPage * 5 + 5; i++) {
-                _loop4(i);
+                _loop5(i);
             }
         }
     }]);
@@ -1119,7 +1246,7 @@ var SaveMainModel = function (_React$Component4) {
 
             this.Buttons = [];
 
-            var _loop5 = function _loop5(i) {
+            var _loop6 = function _loop6(i) {
                 var temp = React.createElement(
                     'span',
                     { className: 'SaveIndexButton', onClick: function onClick() {
@@ -1138,7 +1265,7 @@ var SaveMainModel = function (_React$Component4) {
             };
 
             for (var i = 0; i < this.LoadPageQty; i++) {
-                _loop5(i);
+                _loop6(i);
             }
         }
     }, {
@@ -1148,7 +1275,7 @@ var SaveMainModel = function (_React$Component4) {
 
             this.SaveButtons = [];
 
-            var _loop6 = function _loop6(i) {
+            var _loop7 = function _loop7(i) {
                 if (Saves[i]) {
                     var thisButtonName = Saves[i]["showName"];
                     var thisButtonText = Saves[i]["showText"];
@@ -1192,7 +1319,7 @@ var SaveMainModel = function (_React$Component4) {
             };
 
             for (var i = currentSavePage * 5 + 1; i <= currentSavePage * 5 + 5; i++) {
-                _loop6(i);
+                _loop7(i);
             }
         }
     }, {
@@ -1348,7 +1475,7 @@ function showBacklog() {
     document.getElementById('bottomBox').style.display = 'none';
     var showBacklogList = [];
 
-    var _loop7 = function _loop7(i) {
+    var _loop8 = function _loop8(i) {
         var temp = React.createElement(
             'div',
             { className: 'backlog_singleElement', key: i, onClick: function onClick() {
@@ -1356,12 +1483,12 @@ function showBacklog() {
                 } },
             React.createElement(
                 'div',
-                null,
+                { className: "backlog_name" },
                 CurrentBacklog[i].showName
             ),
             React.createElement(
                 'div',
-                null,
+                { className: "backlog_text" },
                 CurrentBacklog[i].showText
             )
         );
@@ -1369,7 +1496,7 @@ function showBacklog() {
     };
 
     for (var i = 0; i < CurrentBacklog.length; i++) {
-        _loop7(i);
+        _loop8(i);
     }
     ReactDOM.render(React.createElement(
         'div',
@@ -1405,14 +1532,14 @@ function jumpFromBacklog(index) {
                 //200表示执行成功
                 currentScene = getScReq.responseText;
                 currentScene = currentScene.split('\n');
-                for (var _i4 = 0; _i4 < currentScene.length; _i4++) {
-                    var tempSentence = currentScene[_i4].split(";")[0];
+                for (var _i5 = 0; _i5 < currentScene.length; _i5++) {
+                    var tempSentence = currentScene[_i5].split(";")[0];
                     var commandLength = tempSentence.split(":")[0].length;
-                    var _command2 = currentScene[_i4].split(":")[0];
+                    var _command2 = currentScene[_i5].split(":")[0];
                     var content = tempSentence.slice(commandLength + 1);
-                    currentScene[_i4] = currentScene[_i4].split(":");
-                    currentScene[_i4][0] = _command2;
-                    currentScene[_i4][1] = content;
+                    currentScene[_i5] = currentScene[_i5].split(":");
+                    currentScene[_i5][0] = _command2;
+                    currentScene[_i5][1] = content;
                 }
                 // console.log('Read scene complete.');
                 // console.log(currentScene);
@@ -1456,24 +1583,24 @@ function jumpFromBacklog(index) {
                         chooseItems = chooseItems.split("}")[0];
                         chooseItems = chooseItems.split("{")[1];
                         var selection = chooseItems.split(',');
-                        for (var _i5 = 0; _i5 < selection.length; _i5++) {
-                            selection[_i5] = selection[_i5].split(":");
+                        for (var _i6 = 0; _i6 < selection.length; _i6++) {
+                            selection[_i6] = selection[_i6].split(":");
                         }
                         var elements = [];
 
-                        var _loop8 = function _loop8(_i6) {
+                        var _loop9 = function _loop9(_i7) {
                             var temp = React.createElement(
                                 'div',
-                                { className: 'singleChoose', key: _i6, onClick: function onClick() {
-                                        chooseScene(selection[_i6][1]);
+                                { className: 'singleChoose', key: _i7, onClick: function onClick() {
+                                        chooseScene(selection[_i7][1]);
                                     } },
-                                selection[_i6][0]
+                                selection[_i7][0]
                             );
                             elements.push(temp);
                         };
 
-                        for (var _i6 = 0; _i6 < selection.length; _i6++) {
-                            _loop8(_i6);
+                        for (var _i7 = 0; _i7 < selection.length; _i7++) {
+                            _loop9(_i7);
                         }
                         ReactDOM.render(React.createElement(
                             'div',
@@ -1512,6 +1639,71 @@ function closeBacklog() {
     document.getElementById('bottomBox').style.display = 'flex';
 }
 
+function isMobile() {
+    var info = navigator.userAgent;
+    var agents = ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPod", "iPad"];
+    for (var i = 0; i < agents.length; i++) {
+        if (info.indexOf(agents[i]) >= 0) return true;
+    }
+    return false;
+}
+
+var hideTextStatus = false;
+function hideTextBox() {
+    if (!hideTextStatus) {
+        document.getElementById('bottomBox').style.display = 'none';
+        hideTextStatus = true;
+    }
+}
+function clickOnBack() {
+    if (hideTextStatus) {
+        document.getElementById('bottomBox').style.display = 'flex';
+        hideTextStatus = false;
+    } else {
+        nextSentenceProcessor();
+    }
+}
+
+function ren_miniPic() {
+    document.getElementById('ren_test').style.display = 'block';
+    var backUrl = "./game/background/" + currentInfo["bg_Name"];
+    var leftFigUrl = "./game/figure/" + currentInfo["fig_Name_left"];
+    var FigUrl = "./game/figure/" + currentInfo["fig_Name"];
+    var rightFigUrl = "./game/figure/" + currentInfo["fig_Name_right"];
+    var renderList = [];
+    if (currentInfo["fig_Name_left"] !== 'none' && currentInfo["fig_Name_left"] !== '') {
+        var tempIn = React.createElement(
+            'div',
+            { id: "mini_fig_left", className: "mini_fig" },
+            React.createElement('img', { src: leftFigUrl, alt: "mini_fig", className: "mini_fig_pic" })
+        );
+        renderList.push(tempIn);
+    }
+    if (currentInfo["fig_Name"] !== 'none' && currentInfo["fig_Name"] !== '') {
+        var _tempIn = React.createElement(
+            'div',
+            { id: "mini_fig_center", className: "mini_fig" },
+            React.createElement('img', { src: FigUrl, alt: "mini_fig", className: "mini_fig_pic" })
+        );
+        renderList.push(_tempIn);
+    }
+    if (currentInfo["fig_Name_right"] !== 'none' && currentInfo["fig_Name_right"] !== '') {
+        var _tempIn2 = React.createElement(
+            'div',
+            { id: "mini_fig_right", className: "mini_fig" },
+            React.createElement('img', { src: rightFigUrl, alt: "mini_fig", className: "mini_fig_pic" })
+        );
+        renderList.push(_tempIn2);
+    }
+    var element = React.createElement(
+        'div',
+        { id: "miniPic" },
+        renderList
+    );
+    ReactDOM.render(element, document.getElementById('ren_test'));
+    document.getElementById('ren_test').style.backgroundImage = "url('" + backUrl + "')";
+}
+
 // 禁止F12
 // document.onkeydown=function(e){
 //         if(e.keyCode === 123){
@@ -1519,7 +1711,7 @@ function closeBacklog() {
 //             return false
 //         }
 //     }
-//禁止右键菜单以及选择文字
+// 禁止右键菜单以及选择文字
 document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
 });
