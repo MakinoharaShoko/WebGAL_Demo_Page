@@ -10,96 +10,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-//初始化变量表
-{
-    var currentScene = '';
-    var currentSceneIndex = 0;
-    var currentSentence = 0;
-    var currentText = 0;
-    var auto = 0;
-    var fast = 0;
-    var setAutoWaitTime = 1500;
-    var autoWaitTime = 1500;
-    var textShowWatiTime = 35;
-    var currentInfo = {
-        SceneName: '', //场景文件名
-        SentenceID: 0, //语句ID
-        bg_Name: '', //背景文件名
-        fig_Name: '', //立绘_中 文件名
-        fig_Name_left: '', //立绘_左 文件名
-        fig_Name_right: '', //立绘_右 文件名
-        showText: '', //文字
-        showName: '', //人物名
-        command: '', //语句指令
-        choose: '', //选项列表
-        currentText: 0, //当前文字ID
-        vocal: '', //语音 文件名
-        bgm: '' //背景音乐 文件名
-    };
-    var onTextPreview = 0;
-    var currentName = '';
-    var showingText = false;
-}
-
-// 初始化存档系统
-var Saves = [];
-var SaveBacklog = [];
-
-// 初始化backlog存储表
-var CurrentBacklog = [];
-
-//初始化需要记录到cookie的变量
-var currentSavePage = 0;
-var currentLoadPage = 0;
-
-// 初始化设置表
-var Settings = {
-    font_size: 'medium',
-    play_speed: 'medium'
-};
-
-function loadCookie() {
-    if (localStorage.getItem('WebGAL')) {
-        // let pre_process = document.cookie;
-        // let fst = pre_process.split(';')[0];
-        // let scd = document.cookie.slice(fst.length+1);
-        var data = JSON.parse(localStorage.getItem('WebGAL'));
-        Saves = data.SavedGame;
-        SaveBacklog = data.SavedBacklog;
-        currentSavePage = data.SP;
-        currentLoadPage = data.LP;
-        Settings = data.cSettings;
-    }
-}
-
-function writeCookie() {
-    // var expire = new Date((new Date()).getTime() + 20000 * 24 * 60 * 60000);//有效期20000天
-    // expire = ";expires=" + expire.toGMTString();
-    var toCookie = {
-        SavedGame: Saves,
-        SavedBacklog: SaveBacklog,
-        SP: currentSavePage,
-        LP: currentLoadPage,
-        cSettings: Settings
-        // console.log(JSON.stringify(toCookie));
-    };localStorage.setItem('WebGAL', JSON.stringify(toCookie));
-    // document.cookie = JSON.stringify(toCookie);
-}
-
-function clearCookie() {
-    var toCookie = {
-        SavedGame: [],
-        SavedBacklog: [],
-        SP: 0,
-        LP: 0,
-        cSettings: {
-            font_size: 'medium',
-            play_speed: 'medium'
-        }
-    };
-    localStorage.setItem('WebGAL', JSON.stringify(toCookie));
-}
-
 // 读取游戏存档
 function LoadSavedGame(index) {
     closeLoad();
@@ -109,7 +19,6 @@ function LoadSavedGame(index) {
     var url = 'game/scene/';
     url = url + save['SceneName'];
     currentScene = '';
-    currentText = 0;
 
     var getScReq = null;
     getScReq = new XMLHttpRequest();
@@ -138,7 +47,6 @@ function LoadSavedGame(index) {
                 // console.log('Read scene complete.');
                 // console.log(currentScene);
                 currentSentence = save["SentenceID"];
-                currentText = save["SentenceID"];
                 // console.log("start:"+currentSentence)
 
                 //load saved scene:
@@ -212,121 +120,16 @@ function LoadSavedGame(index) {
                 var textArray = save["showText"].split("");
                 // let changedText = <p>{processSentence(currentSentence)['text']}</p>
                 ReactDOM.render(changedName, document.getElementById('pName'));
-                currentText = save["currentText"];
                 currentInfo["vocal"] = save['vocal'];
                 if (currentInfo['bgm'] !== save['bgm']) {
                     currentInfo['bgm'] = save['bgm'];
                     loadBGM();
                 }
                 playVocal();
-                showTextArray(textArray, currentText);
-                // currentText = currentText + 1;
-
-                // currentSentence = currentSentence+1;
+                showTextArray(textArray);
+                CurrentBacklog = SaveBacklog[index];
+                currentInfo = save;
             }
-        }
-    }
-    CurrentBacklog = SaveBacklog[index];
-}
-
-// 保存当前游戏状态
-function saveGame(index) {
-    var tempInfo = JSON.stringify(currentInfo);
-    Saves[index] = JSON.parse(tempInfo);
-    var tempBacklog = JSON.stringify(CurrentBacklog);
-    SaveBacklog[index] = JSON.parse(tempBacklog);
-    writeCookie();
-}
-
-// 获取场景脚本
-function getScene(url) {
-    currentScene = '';
-    currentText = 0;
-
-    var getScReq = null;
-    getScReq = new XMLHttpRequest();
-    console.log('now read scene');
-    if (getScReq != null) {
-        getScReq.open("get", url, true);
-        getScReq.send();
-        getScReq.onreadystatechange = doResult; //设置回调函数
-    }
-    function doResult() {
-        if (getScReq.readyState === 4) {
-            //4表示执行完成
-            if (getScReq.status === 200) {
-                //200表示执行成功
-                currentScene = getScReq.responseText;
-                currentScene = currentScene.split('\n');
-                for (var i = 0; i < currentScene.length; i++) {
-                    var tempSentence = currentScene[i].split(";")[0];
-                    var commandLength = tempSentence.split(":")[0].length;
-                    var command = currentScene[i].split(":")[0];
-                    command = command.split(';')[0];
-                    var content = tempSentence.slice(commandLength + 1);
-                    currentScene[i] = currentScene[i].split(":");
-                    currentScene[i][0] = command;
-                    currentScene[i][1] = content;
-                }
-                // console.log('Read scene complete.');
-                // console.log(currentScene);
-                currentSentence = 0;
-                // console.log("start:"+currentSentence)
-                nextSentenceProcessor();
-            }
-        }
-    }
-}
-
-// 引擎加载完成
-window.onload = function () {
-    loadCookie();
-    loadSettings();
-    document.getElementById('Title').style.backgroundImage = 'url("./game/background/Title.png")';
-    if (isMobile()) {
-        console.log("nowis mobile view");
-        document.getElementById('bottomBox').style.height = '45%';
-        document.getElementById('TitleModel').style.height = '20%';
-    }
-};
-
-function loadSettings() {
-    if (Settings["font_size"] === 'small') {
-        document.getElementById('SceneText').style.fontSize = '150%';
-    } else if (Settings["font_size"] === 'medium') {
-        document.getElementById('SceneText').style.fontSize = '200%';
-    } else if (Settings["font_size"] === 'large') {
-        document.getElementById('SceneText').style.fontSize = '250%';
-    }
-
-    if (Settings["play_speed"] === 'low') {
-        textShowWatiTime = 150;
-    } else if (Settings["play_speed"] === 'medium') {
-        textShowWatiTime = 50;
-    } else if (Settings["play_speed"] === 'fast') {
-        textShowWatiTime = 10;
-    }
-}
-
-// 处理脚本
-function processSentence(i) {
-    if (i < currentScene.length) {
-        var vocal = '';
-        if (currentScene[i][1] !== '') {
-            var text = currentScene[i][1];
-            if (currentScene[i][1].split('vocal-').length > 1) {
-                vocal = currentScene[i][1].split('vocal-')[1].split(',')[0];
-                text = currentScene[i][1].split('vocal-')[1].slice(currentScene[i][1].split('vocal-')[1].split(',')[0].length + 1);
-            }
-            currentName = currentScene[i][0];
-            return { name: currentName, text: text, vocal: vocal };
-        } else {
-            var _text = currentScene[i][0];
-            if (currentScene[i][0].split('vocal-').length > 1) {
-                vocal = currentScene[i][0].split('vocal-')[1].split(',')[0];
-                _text = currentScene[i][0].split('vocal-')[1].slice(currentScene[i][0].split('vocal-')[1].split(',')[0].length + 1);
-            }
-            return { name: currentName, text: _text, vocal: vocal };
         }
     }
 }
@@ -569,9 +372,7 @@ function nextSentenceProcessor() {
             playVocal();
         }
         saveBacklogNow = true;
-        showTextArray(textArray, currentText + 1);
-        currentText = currentText + 1;
-        currentInfo["currentText"] = currentText;
+        showTextArray(textArray);
     }
     currentSentence = currentSentence + 1;
     currentInfo["SentenceID"] = currentSentence;
@@ -579,12 +380,13 @@ function nextSentenceProcessor() {
         if (CurrentBacklog.length <= 500) {
             var temp = JSON.stringify(currentInfo);
             var pushElement = JSON.parse(temp);
-            CurrentBacklog.push(pushElement);
+            console.log("现在写入backlog");
+            CurrentBacklog[CurrentBacklog.length] = JSON.parse(temp);
+            console.log(CurrentBacklog);
         } else {
             CurrentBacklog.shift();
             var _temp = JSON.stringify(currentInfo);
-            var _pushElement = JSON.parse(_temp);
-            CurrentBacklog.push(_pushElement);
+            CurrentBacklog[CurrentBacklog.length] = JSON.parse(_temp);
         }
     }
 
@@ -601,7 +403,7 @@ function nextSentenceProcessor() {
 }
 
 // 渐显文字
-function showTextArray(textArray, now) {
+function showTextArray(textArray) {
     showingText = false;
     ReactDOM.render(React.createElement(
         'span',
@@ -612,7 +414,6 @@ function showTextArray(textArray, now) {
     var i = 0;
     clearInterval(interval);
     var interval = setInterval(showSingle, textShowWatiTime);
-    // console.log("now: "+now+" currentText: "+currentText)
     showingText = true;
     function showSingle() {
         if (!showingText) {
@@ -641,7 +442,7 @@ function showTextArray(textArray, now) {
                 textArray[i]
             );
             elementArray.push(tempElement);
-            if (currentText === now) ReactDOM.render(React.createElement(
+            ReactDOM.render(React.createElement(
                 'div',
                 null,
                 elementArray
@@ -651,9 +452,9 @@ function showTextArray(textArray, now) {
         if (i > textArray.length && auto !== 1) {
             showingText = false;
         }
-        if (i > textArray.length + autoWaitTime / 35 || currentText !== now) {
+        if (i > textArray.length + autoWaitTime / 35) {
 
-            if (auto === 1 && currentText === now) {
+            if (auto === 1) {
                 if (document.getElementById('currentVocal') && fast === 0) {
                     if (document.getElementById('currentVocal').ended) {
                         clearInterval(interval);
@@ -726,28 +527,6 @@ function showTextPreview(text) {
     }
 }
 
-function chooseJumpFun(label) {
-    var lab_name = label;
-    //find the line of the label:
-    var find = false;
-    var jmp_sentence = 0;
-    for (var i = 0; i < currentScene.length; i++) {
-        if (currentScene[i][0] === 'label' && currentScene[i][1] === lab_name) {
-            find = true;
-            jmp_sentence = i;
-        }
-    }
-    if (find) {
-        currentSentence = jmp_sentence;
-        nextSentenceProcessor();
-        document.getElementById("chooseBox").style.display = "none";
-    } else {
-        currentSentence = currentSentence + 1;
-        nextSentenceProcessor();
-        document.getElementById("chooseBox").style.display = "none";
-    }
-}
-
 // 打开设置
 function onSetting() {
     loadCookie();
@@ -766,6 +545,7 @@ function onSetting() {
                     } },
                 '\u6E05\u9664\u6240\u6709\u8BBE\u7F6E\u9009\u9879\u4EE5\u53CA\u5B58\u6863'
             ),
+            React.createElement(ImporterExporter, null),
             React.createElement(
                 'div',
                 null,
@@ -790,73 +570,6 @@ function onSetting() {
     ReactDOM.render(settingInterface, document.getElementById("settingItems"));
     ReactDOM.render(React.createElement('div', { id: 'previewDiv' }), document.getElementById('textPreview'));
     showTextPreview('现在预览的是文本框字体大小和播放速度的情况，您可以根据您的观感调整上面的选项。');
-}
-
-// 关闭设置
-function closeSettings() {
-    document.getElementById("settings").style.display = "none";
-    document.getElementById("bottomBox").style.display = "flex";
-}
-
-// 分支选择
-function chooseScene(url) {
-    // console.log(url);
-    currentInfo["SceneName"] = url;
-    var sUrl = "game/scene/" + url;
-    getScene(sUrl);
-    document.getElementById("chooseBox").style.display = "none";
-}
-
-//自动播放
-function autoNext() {
-    if (auto === 0) {
-        autoWaitTime = setAutoWaitTime;
-        textShowWatiTime = 35;
-        fast = 0;
-        auto = 0;
-        document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0)';
-        document.getElementById('fastButton').style.color = 'white';
-        // console.log("notFast");
-        autoWaitTime = setAutoWaitTime;
-        auto = 1;
-        // console.log("auto");
-        document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0.8)';
-        document.getElementById('autoButton').style.color = '#8E354A';
-        nextSentenceProcessor();
-    } else if (auto === 1) {
-        autoWaitTime = setAutoWaitTime;
-        auto = 0;
-        document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0)';
-        document.getElementById('autoButton').style.color = 'white';
-        // console.log("notAuto");
-    }
-}
-
-// 快进
-function fastNext() {
-    if (fast === 0) {
-        autoWaitTime = setAutoWaitTime;
-        auto = 0;
-        document.getElementById('autoButton').style.backgroundColor = 'rgba(255,255,255,0)';
-        document.getElementById('autoButton').style.color = 'white';
-        // console.log("notAuto");
-        autoWaitTime = 500;
-        textShowWatiTime = 5;
-        fast = 1;
-        auto = 1;
-        // console.log("fast");
-        document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0.8)';
-        document.getElementById('fastButton').style.color = '#8E354A';
-        nextSentenceProcessor();
-    } else if (fast === 1) {
-        autoWaitTime = setAutoWaitTime;
-        textShowWatiTime = 35;
-        fast = 0;
-        auto = 0;
-        document.getElementById('fastButton').style.backgroundColor = 'rgba(255,255,255,0)';
-        document.getElementById('fastButton').style.color = 'white';
-        // console.log("notFast");
-    }
 }
 
 var SettingButtons_font = function (_React$Component) {
@@ -1076,10 +789,6 @@ function onLoadGame() {
     ReactDOM.render(React.createElement(LoadMainModel, { PageQty: 15 }), document.getElementById('LoadItems'));
 }
 
-function closeLoad() {
-    document.getElementById('Load').style.display = 'none';
-}
-
 var LoadMainModel = function (_React$Component3) {
     _inherits(LoadMainModel, _React$Component3);
 
@@ -1227,10 +936,6 @@ function onSaveGame() {
     loadCookie();
     document.getElementById('Save').style.display = 'block';
     ReactDOM.render(React.createElement(SaveMainModel, { PageQty: 15 }), document.getElementById('SaveItems'));
-}
-
-function closeSave() {
-    document.getElementById('Save').style.display = 'none';
 }
 
 var SaveMainModel = function (_React$Component4) {
@@ -1431,26 +1136,6 @@ function showMesModel(Title, Left, Right, func) {
     ReactDOM.render(element, document.getElementById('MesModel'));
 }
 
-function exit() {
-    showMesModel('你确定要退出吗', '退出', '留在本页', function () {
-        window.close();
-    });
-}
-
-function Title() {
-    showMesModel('要返回到标题界面吗', '是', '不要', function () {
-        document.getElementById('Title').style.display = 'block';
-    });
-}
-
-function continueGame() {
-    if (currentScene === '') {
-        getScene("game/scene/start.txt");
-        currentInfo["SceneName"] = 'start.txt';
-    }
-    document.getElementById('Title').style.display = 'none';
-}
-
 function loadBGM() {
     var bgmName = currentInfo["bgm"];
     if (bgmName === '' || bgmName === 'none') {
@@ -1477,6 +1162,9 @@ function playVocal() {
 }
 
 function showBacklog() {
+    var even = window.event || arguments.callee.caller.arguments[0];
+    even.preventDefault();
+    even.stopPropagation(); //阻止事件冒泡
     document.getElementById('backlog').style.display = 'block';
     document.getElementById('bottomBox').style.display = 'none';
     var showBacklogList = [];
@@ -1514,14 +1202,13 @@ function showBacklog() {
 function jumpFromBacklog(index) {
     closeBacklog();
     var save = CurrentBacklog[index];
-    for (var i = CurrentBacklog.length - 1; i > index; i--) {
+    for (var i = CurrentBacklog.length - 1; i > index - 1; i--) {
         CurrentBacklog.pop();
     }
     //get Scene:
     var url = 'game/scene/';
     url = url + save['SceneName'];
     currentScene = '';
-    currentText = 0;
 
     var getScReq = null;
     getScReq = new XMLHttpRequest();
@@ -1547,10 +1234,7 @@ function jumpFromBacklog(index) {
                     currentScene[_i5][0] = _command2;
                     currentScene[_i5][1] = content;
                 }
-                // console.log('Read scene complete.');
-                // console.log(currentScene);
                 currentSentence = save["SentenceID"];
-                currentText = save["SentenceID"];
                 // console.log("start:"+currentSentence)
 
                 //load saved scene:
@@ -1624,25 +1308,20 @@ function jumpFromBacklog(index) {
                 var textArray = save["showText"].split("");
                 // let changedText = <p>{processSentence(currentSentence)['text']}</p>
                 ReactDOM.render(changedName, document.getElementById('pName'));
-                currentText = save["currentText"];
                 currentInfo["vocal"] = save['vocal'];
                 if (currentInfo['bgm'] !== save['bgm']) {
                     currentInfo['bgm'] = save['bgm'];
                     loadBGM();
                 }
                 playVocal();
-                showTextArray(textArray, currentText);
-                // currentText = currentText + 1;
-
+                currentName = save["showName"];
+                showTextArray(textArray);
+                currentInfo = save;
+                CurrentBacklog[CurrentBacklog.length] = JSON.parse(JSON.stringify(currentInfo));
                 // currentSentence = currentSentence+1;
             }
         }
     }
-}
-
-function closeBacklog() {
-    document.getElementById('backlog').style.display = 'none';
-    document.getElementById('bottomBox').style.display = 'flex';
 }
 
 function showIntro(text) {
@@ -1650,19 +1329,14 @@ function showIntro(text) {
     var IntroView = React.createElement(
         'div',
         null,
-        React.createElement(
-            'div',
-            { className: "skipIntro", onClick: function onClick() {
-                    if (introInterval) clearInterval(introInterval);
-                    document.getElementById("intro").style.display = 'none';
-                    currentSentence = currentSentence + 1;
-                    nextSentenceProcessor();
-                } },
-            '\u8DF3\u8FC7'
-        ),
         React.createElement('div', { id: "textShowArea", className: "textShowArea_styl" })
     );
     ReactDOM.render(IntroView, document.getElementById("intro"));
+    ReactDOM.render(React.createElement(
+        'div',
+        null,
+        " "
+    ), document.getElementById("textShowArea"));
     document.getElementById("intro").style.display = 'block';
     var textArray = text.split(',');
     var introInterval = setInterval(textShow, 1500);
@@ -1684,37 +1358,6 @@ function showIntro(text) {
             clearInterval(introInterval);
             setTimeout(clearIntro, 3500);
         }
-    }
-}
-
-function clearIntro() {
-    document.getElementById("intro").style.display = 'none';
-    currentSentence = currentSentence + 1;
-    nextSentenceProcessor();
-}
-
-function isMobile() {
-    var info = navigator.userAgent;
-    var agents = ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPod", "iPad"];
-    for (var i = 0; i < agents.length; i++) {
-        if (info.indexOf(agents[i]) >= 0) return true;
-    }
-    return false;
-}
-
-var hideTextStatus = false;
-function hideTextBox() {
-    if (!hideTextStatus) {
-        document.getElementById('bottomBox').style.display = 'none';
-        hideTextStatus = true;
-    }
-}
-function clickOnBack() {
-    if (hideTextStatus) {
-        document.getElementById('bottomBox').style.display = 'flex';
-        hideTextStatus = false;
-    } else {
-        nextSentenceProcessor();
     }
 }
 
@@ -1757,21 +1400,6 @@ function ren_miniPic() {
     ReactDOM.render(element, document.getElementById('ren_test'));
     document.getElementById('ren_test').style.backgroundImage = "url('" + backUrl + "')";
 }
-
-// 禁止F12
-// document.onkeydown=function(e){
-//         if(e.keyCode === 123){
-//             e.returnValue=false
-//             return false
-//         }
-//     }
-// 禁止右键菜单以及选择文字
-document.addEventListener('contextmenu', function (e) {
-    e.preventDefault();
-});
-document.addEventListener('selectstart', function (e) {
-    e.preventDefault();
-});
 
 /**
  * 查询当前组件状态
@@ -1865,182 +1493,7 @@ function AllHiddenIgnore(states, ignore) {
     return true;
 }
 
-// -------- 快捷键 --------
-
-document.addEventListener('keydown', function (ev) {
-    if (ev.isComposing || ev.defaultPrevented || ev.repeat) return;
-
-    switch (ev.code) {
-        // begin ctrl skip
-        case 'ControlLeft':
-        case 'ControlRight':
-            {
-                var state = queryWidgetState();
-                // 「正在游戏」状态
-                if (AllHiddenIgnore(state, 'TextBox')) {
-                    fastNext();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        default:
-            break;
-    }
-});
-
-document.addEventListener('keyup', function (ev) {
-    if (ev.isComposing || ev.defaultPrevented) return;
-
-    switch (ev.code) {
-        // end ctrl skip
-        case 'ControlLeft':
-        case 'ControlRight':
-            {
-                var state = queryWidgetState();
-                // 「正在游戏」状态
-                if (AllHiddenIgnore(state, 'TextBox')) {
-                    fastNext();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // advance text / confirm
-        case 'Space':
-        case 'Enter':
-        case 'NumpadEnter':
-            {
-                var _state = queryWidgetState();
-                if (AllHiddenIgnore(_state, 'TextBox')) {
-                    // 文本框显示
-                    if (_state.get('TextBox')) nextSentenceProcessor();else {
-                        document.querySelector('div#bottomBox').style.display = 'flex';
-                        hideTextStatus = false;
-                    }
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // auto mode
-        case 'KeyA':
-            {
-                var _state2 = queryWidgetState();
-                if (AllHiddenIgnore(_state2, 'TextBox')) {
-                    autoNext();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // skip mode
-        case 'KeyF':
-            {
-                var _state3 = queryWidgetState();
-                if (AllHiddenIgnore(_state3, 'TextBox')) {
-                    fastNext();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // replay voice
-        case 'KeyV':
-            {
-                var _state4 = queryWidgetState();
-                if (AllHiddenIgnore(_state4, 'TextBox')) {
-                    playVocal();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // save dialog
-        case 'KeyS':
-            {
-                var _state5 = queryWidgetState();
-                if (AllHiddenIgnore(_state5, ['TextBox', 'SaveScreen'])) {
-                    if (_state5.get('SaveScreen')) closeSave();else onSaveGame();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // load dialog
-        case 'KeyL':
-            {
-                var _state6 = queryWidgetState();
-                if (AllHiddenIgnore(_state6, ['TextBox', 'LoadScreen'])) {
-                    if (_state6.get('LoadScreen')) closeLoad();else onLoadGame();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // settings dialog
-        case 'KeyC':
-            {
-                var _state7 = queryWidgetState();
-                if (AllHiddenIgnore(_state7, ['TextBox', 'SettingScreen'])) {
-                    if (_state7.get('SettingScreen')) closeSettings();else onSetting();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // open backlog
-        case 'ArrowUp':
-            {
-                var _state8 = queryWidgetState();
-                // 已经打开 backlog 后不再拦截上键
-                if (AllHiddenIgnore(_state8, 'TextBox')) {
-                    showBacklog();
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // hide window
-        case 'Delete':
-            {
-                if (AllHiddenIgnore(queryWidgetState(['TitleScreen', 'PanicScreen']))) {
-                    var _state9 = queryWidgetState(['TextBox', 'SaveScreen', 'LoadScreen', 'SettingScreen', 'BacklogScreen']);
-                    // 「正在游戏」状态
-                    if (AllHiddenIgnore(_state9, 'TextBox')) {
-                        if (_state9.get('TextBox')) {
-                            document.querySelector('div#bottomBox').style.display = 'none';
-                            hideTextStatus = true;
-                        } else {
-                            document.querySelector('div#bottomBox').style.display = 'flex';
-                            hideTextStatus = false;
-                        }
-                    }
-                    // 有其他窗口
-                    else {
-                            if (_state9.get('SaveScreen')) closeSave();
-                            if (_state9.get('LoadScreen')) closeLoad();
-                            if (_state9.get('SettingScreen')) closeSettings();
-                            if (_state9.get('BacklogScreen')) closeBacklog();
-                            // 紧急回避专用 ESC 键控制
-                        }
-                    ev.preventDefault();
-                }
-            }
-            break;
-
-        // panic button
-        case 'Escape':
-            {
-                if (queryWidgetState('PanicScreen')) hidePanic();else showPanic('Yoozle');
-                ev.preventDefault();
-            }
-            break;
-
-        default:
-            break;
-    }
-});
+// -------- 紧急回避 --------
 
 function showPanic(showType) {
     document.querySelector('div#panic-overlay').style.display = 'block';
@@ -2108,3 +1561,94 @@ function showPanic(showType) {
 function hidePanic() {
     document.querySelector('div#panic-overlay').style.display = 'none';
 }
+
+// -------- 导入导出存档 --------
+
+var ImporterExporter = function (_React$Component5) {
+    _inherits(ImporterExporter, _React$Component5);
+
+    function ImporterExporter() {
+        _classCallCheck(this, ImporterExporter);
+
+        var _this11 = _possibleConstructorReturn(this, (ImporterExporter.__proto__ || Object.getPrototypeOf(ImporterExporter)).call(this));
+
+        _this11.dummyA = null;
+        _this11.dummyInput = null;
+        return _this11;
+    }
+
+    _createClass(ImporterExporter, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            this.dummyA = document.querySelector('a#dummy-saves-exporter');
+            this.dummyInput = document.querySelector('input#dummy-saves-importer');
+        }
+    }, {
+        key: 'importSaves',
+        value: function importSaves(ev) {
+            var file = ev.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (evR) {
+                var saves = evR.target.result;
+                localStorage.setItem('WebGAL', saves);
+                loadCookie();
+                window.location.reload(); // dirty: 强制刷新 UI
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+    }, {
+        key: 'exportSaves',
+        value: function exportSaves() {
+            var saves = localStorage.getItem('WebGAL');
+            if (saves === null) {
+                // no saves
+                return false;
+            }
+            var blob = new Blob([saves], { type: 'application/json' });
+            var blobUrl = URL.createObjectURL(blob);
+            URL.revokeObjectURL(this.dummyA.href);
+            this.dummyA.href = blobUrl;
+            this.dummyA.download = 'saves.json';
+            this.dummyA.click();
+            return true;
+        }
+    }, {
+        key: 'render',
+        value: function render() {
+            var _this12 = this;
+
+            return React.createElement(
+                'div',
+                { className: 'importer-exporter' },
+                React.createElement(
+                    'span',
+                    { className: 'label-saves-exporter', onClick: function onClick() {
+                            _this12.exportSaves();
+                        } },
+                    '\u5BFC\u51FA\u5B58\u6863'
+                ),
+                React.createElement('a', { target: '_blank', id: 'dummy-saves-exporter', style: { display: "none" } }),
+                React.createElement(
+                    'span',
+                    { className: 'label-saves-importer', onClick: function onClick() {
+                            _this12.dummyInput.click();
+                        } },
+                    '\u5BFC\u5165\u5B58\u6863'
+                ),
+                React.createElement('input', { type: 'file', id: 'dummy-saves-importer', style: { display: "none" }, onChange: this.importSaves })
+            );
+        }
+    }, {
+        key: 'checkSyntax',
+        value: function checkSyntax(text) {
+            try {
+                var json = JSON.parse(text);
+            } catch (error) {
+                return false;
+            }
+            return true;
+        }
+    }]);
+
+    return ImporterExporter;
+}(React.Component);
