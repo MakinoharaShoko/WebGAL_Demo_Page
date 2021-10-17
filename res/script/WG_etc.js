@@ -14,8 +14,39 @@ document.addEventListener('selectstart', function(e) {
 });
 
 
-// -------- 快捷键 --------
 
+
+// -------- 右键 --------
+
+document.addEventListener('mouseup', function (ev) {
+    if (ev.button === 2) {
+        // 目前等功能同于 delete 键
+        const evt = new KeyboardEvent('keyup', { key: 'Delete', code: 'Delete' });
+        document.dispatchEvent(evt);
+        ev.preventDefault();
+    }
+});
+
+
+
+// -------- 滚轮 --------
+
+document.addEventListener('wheel', function (ev) {
+    const state = queryWidgetState();
+    if (!(AllHiddenIgnore(state, 'TextBox') && state.get('TextBox')))
+        return;
+    // 「正在游戏」状态
+    if (ev.deltaY > 0) {
+        nextSentenceProcessor();
+        ev.preventDefault();
+    }
+    else if (ev.deltaY < 0) {
+        showBacklog();
+        ev.preventDefault();
+    }
+});
+
+// -------- 快捷键 --------
 document.addEventListener('keydown', function (ev) {
     if (ev.isComposing || ev.defaultPrevented || ev.repeat)
         return;
@@ -38,8 +69,6 @@ document.addEventListener('keydown', function (ev) {
             break;
     }
 });
-
-
 document.addEventListener('keyup', function (ev) {
     if (ev.isComposing || ev.defaultPrevented)
         return;
@@ -212,3 +241,18 @@ document.addEventListener('keyup', function (ev) {
             break;
     }
 });
+
+//手机优化
+function isMobile(){
+    let info = navigator.userAgent;
+    let agents = ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPod", "iPad"];
+    for(let i = 0; i < agents.length; i++){
+        if(info.indexOf(agents[i]) >= 0) return true;
+    }
+    return false;
+}
+function MobileChangeStyle(){
+    console.log("now is mobile view");
+    document.getElementById('bottomBox').style.height = '45%';
+    document.getElementById('TitleModel').style.height = '20%';
+}
