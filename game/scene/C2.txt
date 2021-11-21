@@ -1,5 +1,10 @@
-雪之下雪乃:你选择了分支2，请允许我在此分支介绍一些关于WebGAL的开发轶事。;
-雪之下雪乃:这个项目是开发者第一次使用React开发项目，也是作者的React练手项目，所以很多地方尚不完善，多多包涵。;
-雪之下雪乃:这个项目的UI是作者手工打造，没有使用任何库。手搓UI的苦逼与其中的乐趣，可能只有做过的人才明白吧！;
-雪之下雪乃:这个项目的制作初衷是因为作者想要自己开发GalGame，结果发现renpy太难入门，于是怒自制引擎。;
-changeScene:exit.txt;
+WebGAL:让我们来测试分支跳转到label！;
+choose_label:{测试1:label_1,测试2:label_2};
+label:label_1;
+现在应该是1号分支;
+jump_label:end;
+label:label_2;
+现在应该是2号分支;
+jump_label:end;
+label:end;
+现在是统一的结束;
