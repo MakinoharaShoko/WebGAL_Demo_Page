@@ -1,3 +1,4 @@
+playVideo:OP.mp4
 changeBG_next:c3.jpg;
 changeP_left_next:m2.png;
 bgm:cb1.mp3;
