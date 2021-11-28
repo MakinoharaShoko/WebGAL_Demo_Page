@@ -530,7 +530,7 @@ a:visited{
     position: absolute;
     z-index: 25;
     /*background-color: rgba(0,0,0,0.5);*/
-    background-image: url("/game/background/Loading_img.jpg");
+    background-image: url("./game/background/Loading_img.jpg");
     background-size:cover;
     color: #FEDFE1;
     font-size: 225%;
